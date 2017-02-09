@@ -8,11 +8,13 @@ It's based on react-boilerplate (React, Redux, ES6, Babel, Wabpack, Styled Compo
 1) Clone application
 
 > git clone https://github.com/vkurlyan/react-pattern-lock.git
+
 > cd react-pattern-lock
 
 2) Run commands
 
 > npm install
+
 > npm run start
 
 When server will be started, open application on http://localhost:3000/
