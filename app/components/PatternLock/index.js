@@ -1,10 +1,11 @@
-import React, {PropTypes} from 'react';
+import React, { PropTypes } from 'react';
 import styled from 'styled-components';
-import {getByAttr} from '../../utils/get-by-attr';
-import {Polyline, Circle, Dot} from './svg';
+import { getByAttr } from '../../utils/get-by-attr';
+import { Polyline, Circle, Dot } from './svg';
 
 const Wrapper = styled.div`
   text-align: center;
+  touch-action: none;
 `;
 
 const defaultParams = {
@@ -66,17 +67,17 @@ export default class PatternLock extends React.PureComponent {
 	 * Generate points for polyline element
 	 * @return {string} example: "0,0 10,10 10,20"
 	 */
-	getLinePoints(){
-  		const {pattern=[]} = this.props;
-  		const {circles} = this.state;
-  		let points = [];
+	getLinePoints() {
+		const { pattern = [] } = this.props;
+		const { circles } = this.state;
+		let points = [];
 
-  		for (let i = 0; i < pattern.length; i++) {
-  			let circle = getByAttr(circles, 'key', pattern[i]);
-  			points.push(`${circle.x},${circle.y}`);
-  		}
+		for (let i = 0; i < pattern.length; i++) {
+			let circle = getByAttr(circles, 'key', pattern[i]);
+			points.push(`${circle.x},${circle.y}`);
+		}
 
-  		return points.join(' ');
+		return points.join(' ');
 	}
 
 	/**
@@ -92,22 +93,22 @@ export default class PatternLock extends React.PureComponent {
 	 * Attach onmouseup event listener.
 	 * Calculate pattern parameters and save it to state
 	 */
-	componentWillMount () {
-        document.addEventListener('mouseup', this.onMouseUp, false);
+	componentWillMount() {
+		document.addEventListener('mouseup', this.onMouseUp, false);
 
-        const params = this.generateParams();
-	   	this.setState({
-	   		params,
-	   		circles: this.getCirclesCollection(params) 
-	   	})
-    }
+		const params = this.generateParams();
+		this.setState({
+			params,
+			circles: this.getCirclesCollection(params)
+		})
+	}
 
     /**
      * removes event listener from document
      */
-    componentWillUnmount () {
-        document.removeEventListener('mouseup', this.onMouseUp, false);
-    }
+	componentWillUnmount() {
+		document.removeEventListener('mouseup', this.onMouseUp, false);
+	}
 
 	onMouseDown(event) {
 		if (!this.props.isSync) {
@@ -130,6 +131,33 @@ export default class PatternLock extends React.PureComponent {
 	}
 
 	/**
+	 * For Mobile Events
+	 */
+	onTouchStart(event) {
+		this.onMouseDown(event);
+	}
+
+	onTouchEnd(event) {
+		this.onMouseUp(event);
+	}
+
+	onTouchMove(event) {
+
+		var touchLocation = event.changedTouches[0];
+		var target = document.elementFromPoint(touchLocation.clientX, touchLocation.clientY);
+
+		if (target) {
+			const parentNode = target.parentElement || target.parentNode;
+			const key = parseInt(parentNode.getAttribute('data-key'));
+
+			if (key) {
+				event.target = target;
+				this.onMouseEnter(event)
+			}
+		}
+
+	}
+	/**
 	 * Dispatch select action if new circle is selected
 	 * @param  {{}} event
 	 */
@@ -143,38 +171,41 @@ export default class PatternLock extends React.PureComponent {
 	}
 
 	render() {
-		const {params, circles} = this.state;
+		const { params, circles } = this.state;
 		const points = this.getLinePoints();
 		const self = this;
 
 		return (
 			<Wrapper>
-				<svg 
-					width={params.svgWidth} 
+				<svg
+					width={params.svgWidth}
 					height={params.svgHeight}
-					viewBox={`0 0 ${params.svgWidth} ${params.svgHeight}`} 
-					version="1.1" 
+					viewBox={`0 0 ${params.svgWidth} ${params.svgHeight}`}
+					version="1.1"
 					xmlns="http://www.w3.org/2000/svg"
 				>
 					{points && <Polyline points={points} />}
 
-					{circles.map((circle)=>{
+					{circles.map((circle) => {
 						const className = self.isSelected(circle.key) ? 'selected' : undefined;
 
 						return (
-							<g 
-								key={`${circle.key}`} 
-					  			data-key={circle.key}
-								onMouseDown={self.onMouseDown} 
+							<g
+								key={`${circle.key}`}
+								data-key={circle.key}
+								onMouseDown={self.onMouseDown}
 								onMouseEnter={self.onMouseEnter}
+								onTouchStart={(e) => self.onTouchStart(e)}
+								onTouchEnd={(e) => self.onTouchEnd(e)}
+								onTouchMove={(e) => self.onTouchMove(e)}
 							>
-					  			<Circle 
-					  				cx={circle.x} 
-					  				cy={circle.y} 
-					  				r={params.circleRadius} 
-					  				className={className} 
-					  			/>
-					  			<Dot cx={circle.x} cy={circle.y} r={params.smallCircleRadius} />
+								<Circle
+									cx={circle.x}
+									cy={circle.y}
+									r={params.circleRadius}
+									className={className}
+								/>
+								<Dot cx={circle.x} cy={circle.y} r={params.smallCircleRadius} />
 							</g>
 						);
 					})}
